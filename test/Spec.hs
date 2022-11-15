@@ -120,10 +120,8 @@ normalizeTests :: TestTree
 normalizeTests = testCase
   "normalize"
   $ do
-    assertEqual
-      "Normalize a value"
-      (normalize $ TLam $ TLam $ TAppl (TVar 1) (TVar 0))
-      (TLam $ TLam $ TAppl (TVar 1) (TVar 0))
+    let value = TLam $ TLam $ TAppl (TVar 1) (TVar 0)
+     in assertEqual "Normalize a value" (normalize value) value
 
     let s = TLam $ TLam $ TLam $ TAppl (TAppl (TVar 2) (TVar 0)) (TAppl (TVar 1) (TVar 0))
         k = TLam $ TLam $ TVar 1
