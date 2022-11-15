@@ -6,3 +6,5 @@ We use De Bruijn _indices_ for terms and De Bruijn _levels_ for values. In combi
 
  - The NbE implementation: [`src/Lib.hs`](src/Lib.hs).
  - The unit tests: [`test/Spec.hs`](test/Spec.hs).
+
+Type `stack test` in the root project directory to execute the tests.
