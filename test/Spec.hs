@@ -13,14 +13,14 @@ evalVars :: TestTree
 evalVars = testCase
   "Evaluate variables"
   $ do
-    assertEqual "A variable 0" (evalWithEnv [vvar 123] $ TVar 0) (vvar 123)
+    assertEqual "A variable 0" (eval [vvar 123] $ TVar 0) (vvar 123)
     assertEqual
       "A variable 1"
-      (evalWithEnv [vvar 0, VClosure [vvar 123] $ TVar 0] $ TVar 1)
+      (eval [vvar 0, VClosure [vvar 123] $ TVar 0] $ TVar 1)
       (VClosure [vvar 123] $ TVar 0)
     assertEqual
       "A variable 2"
-      (evalWithEnv [vvar 0, vvar 1, VNeutral $ NAppl (NVar 123) (vvar 42)] $ TVar 2)
+      (eval [vvar 0, vvar 1, VNeutral $ NAppl (NVar 123) (vvar 42)] $ TVar 2)
       (VNeutral $ NAppl (NVar 123) (vvar 42))
 
 idTerm :: Term
@@ -33,10 +33,10 @@ evalLams :: TestTree
 evalLams = testCase
   "Evaluate lambdas"
   $ do
-    assertEqual "An identity closure" (eval idTerm) idValue
+    assertEqual "An identity closure" (eval [] idTerm) idValue
     assertEqual
       "Don't evaluate under a binder"
-      (eval $ TLam $ TAppl idTerm (TVar 0))
+      (eval [] $ TLam $ TAppl idTerm (TVar 0))
       (VClosure [] $ TAppl idTerm (TVar 0))
 
 evalAppls :: TestTree
@@ -45,29 +45,29 @@ evalAppls = testCase
   $ do
     assertEqual
       "A reducible application"
-      (evalWithEnv [vvar 123] $ TAppl idTerm (TVar 0))
+      (eval [vvar 123] $ TAppl idTerm (TVar 0))
       (vvar 123)
     assertEqual
       "A reducible application with a reducible arg"
-      (evalWithEnv [vvar 123] $ TAppl idTerm (TAppl idTerm (TVar 0)))
+      (eval [vvar 123] $ TAppl idTerm (TAppl idTerm (TVar 0)))
       (vvar 123)
     assertEqual
       "A reducible application with a closure result"
-      (evalWithEnv [vvar 123] $ TAppl (TLam $ TLam $ TVar 1) (TVar 0))
+      (eval [vvar 123] $ TAppl (TLam $ TLam $ TVar 1) (TVar 0))
       (VClosure [vvar 123, vvar 123] $ TVar 1)
 
     assertEqual
       "A neutral application"
-      (evalWithEnv [vvar 123, vvar 42] $ TAppl (TVar 0) (TVar 1))
+      (eval [vvar 123, vvar 42] $ TAppl (TVar 0) (TVar 1))
       (VNeutral $ NAppl (NVar 123) (vvar 42))
     assertEqual
       "A neutral application with a reducible arg"
-      (evalWithEnv [vvar 123, vvar 42] $ TAppl (TVar 0) (TAppl idTerm (TVar 1)))
+      (eval [vvar 123, vvar 42] $ TAppl (TVar 0) (TAppl idTerm (TVar 1)))
       (VNeutral $ NAppl (NVar 123) (vvar 42))
 
     assertEqual
       "Nested applications"
-      ( evalWithEnv [vvar 123] $
+      ( eval [vvar 123] $
           TAppl
             ( TAppl
                 ( TAppl
@@ -84,19 +84,19 @@ quoteTests :: TestTree
 quoteTests = testCase
   "quote"
   $ do
-    assertEqual "An identity lambda" (quote idValue) idTerm
+    assertEqual "An identity lambda" (quote 0 idValue) idTerm
     assertEqual
       "A nested lambda"
-      (quote $ VClosure [] $ TLam $ TLam $ TVar 2)
+      (quote 0 $ VClosure [] $ TLam $ TLam $ TVar 2)
       (TLam $ TLam $ TLam $ TVar 2)
 
     assertEqual
       "A lambda with reducible body"
-      (quote $ VClosure [] $ TAppl idTerm (TVar 0))
+      (quote 0 $ VClosure [] $ TAppl idTerm (TVar 0))
       (TLam $ TVar 0)
     assertEqual
       "A lambda with neutral body"
-      ( quote $
+      ( quote 0 $
           VClosure [] $
             TLam $
               TAppl (TVar 0) (TAppl (TVar 1) idTerm)
@@ -105,7 +105,7 @@ quoteTests = testCase
 
     assertEqual
       "A complex lambda"
-      ( quote $
+      ( quote 0 $
           VClosure [] $
             TAppl
               ( TLam $

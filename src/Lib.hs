@@ -9,7 +9,6 @@ module Lib
     Neutral (..),
     vvar,
     eval,
-    evalWithEnv,
     quote,
     normalize,
   )
@@ -40,33 +39,27 @@ vvar lvl = VNeutral $ NVar lvl
 
 type Env = [Value]
 
-evalWithEnv :: Env -> Term -> Value
-evalWithEnv env = \case
+eval :: Env -> Term -> Value
+eval env = \case
   TVar (Idx x) -> env !! x
   TLam body -> VClosure env body
   TAppl m n ->
-    let rator = evalWithEnv env m
-        rand = evalWithEnv env n
+    let rator = eval env m
+        rand = eval env n
      in case rator of
-          VClosure env' body -> evalWithEnv (rand : env') body
+          VClosure env' body -> eval (rand : env') body
           VNeutral neutral -> VNeutral $ NAppl neutral rand
 
-eval :: Term -> Value
-eval = evalWithEnv []
-
-quoteWithLvl :: Lvl -> Value -> Term
-quoteWithLvl lvl = \case
+quote :: Lvl -> Value -> Term
+quote lvl = \case
   VClosure env body ->
-    let evaluatedBody = evalWithEnv (vvar lvl : env) body
-     in TLam $ quoteWithLvl (lvl + 1) evaluatedBody
+    let evaluatedBody = eval (vvar lvl : env) body
+     in TLam $ quote (lvl + 1) evaluatedBody
   VNeutral (NVar (Lvl x)) -> TVar $ Idx $ unLvl lvl - x - 1
   VNeutral (NAppl m n) ->
-    let rator = quoteWithLvl lvl (VNeutral m)
-        rand = quoteWithLvl lvl n
+    let rator = quote lvl (VNeutral m)
+        rand = quote lvl n
      in TAppl rator rand
 
-quote :: Value -> Term
-quote = quoteWithLvl 0
-
 normalize :: Term -> Term
-normalize = quote . eval
+normalize = quote 0 . eval []
