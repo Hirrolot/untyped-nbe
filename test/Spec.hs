@@ -20,8 +20,8 @@ evalVars = testCase
       (VClosure [vvar 123] $ TVar 0)
     assertEqual
       "A variable 2"
-      (eval [vvar 0, vvar 1, VNeutral $ NAppl (NVar 123) (vvar 42)] $ TVar 2)
-      (VNeutral $ NAppl (NVar 123) (vvar 42))
+      (eval [vvar 0, vvar 1, vappl (NVar 123) (vvar 42)] $ TVar 2)
+      (vappl (NVar 123) (vvar 42))
 
 idTerm :: Term
 idTerm = TLam $ TVar 0
@@ -59,11 +59,11 @@ evalAppls = testCase
     assertEqual
       "A neutral application"
       (eval [vvar 123, vvar 42] $ TAppl (TVar 0) (TVar 1))
-      (VNeutral $ NAppl (NVar 123) (vvar 42))
+      (vappl (NVar 123) (vvar 42))
     assertEqual
       "A neutral application with a reducible arg"
       (eval [vvar 123, vvar 42] $ TAppl (TVar 0) (TAppl idTerm (TVar 1)))
-      (VNeutral $ NAppl (NVar 123) (vvar 42))
+      (vappl (NVar 123) (vvar 42))
 
     assertEqual
       "Nested applications"
@@ -121,12 +121,12 @@ normalizeTests = testCase
   "normalize"
   $ do
     let value = TLam $ TLam $ TAppl (TVar 1) (TVar 0)
-     in assertEqual "Normalize a value" (normalize value) value
+     in assertEqual "Normalize a value" (normalize 0 [] value) value
 
     let s = TLam $ TLam $ TLam $ TAppl (TAppl (TVar 2) (TVar 0)) (TAppl (TVar 1) (TVar 0))
         k = TLam $ TLam $ TVar 1
         i = TLam $ TVar 0
      in do
-          assertEqual "SKK = I" (normalize $ TAppl (TAppl s k) k) i
-          assertEqual "KSK = S" (normalize $ TAppl (TAppl k s) k) s
-          assertEqual "SKSK = K" (normalize $ TAppl (TAppl (TAppl s k) s) k) k
+          assertEqual "SKK = I" (normalize 0 [] $ TAppl (TAppl s k) k) i
+          assertEqual "KSK = S" (normalize 0 [] $ TAppl (TAppl k s) k) s
+          assertEqual "SKSK = K" (normalize 0 [] $ TAppl (TAppl (TAppl s k) s) k) k
