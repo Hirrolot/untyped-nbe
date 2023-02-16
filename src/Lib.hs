@@ -20,8 +20,8 @@ newtype Idx = Idx {unIdx :: Int} deriving (Show, Eq, Num)
 newtype Lvl = Lvl {unLvl :: Int} deriving (Show, Eq, Num)
 
 data Term
-  = TVar Idx
-  | TLam Term
+  = TLam Term
+  | TVar Idx
   | TAppl Term Term
   deriving (Show, Eq)
 
@@ -45,13 +45,11 @@ type Env = [Value]
 
 eval :: Env -> Term -> Value
 eval env = \case
-  TVar (Idx i) -> env !! i
   TLam m -> VClosure env m
-  TAppl m n -> evalAppl (eval env m) (eval env n)
-
-evalAppl :: Value -> Value -> Value
-evalAppl (VClosure env m) n = eval (n : env) m
-evalAppl (VNeutral m) n = vappl m n
+  TVar (Idx i) -> env !! i
+  TAppl m n -> case (eval env m, eval env n) of
+    (VClosure env' m', n') -> eval (n' : env') m'
+    (VNeutral m', n') -> vappl m' n'
 
 quote :: Lvl -> Value -> Term
 quote lvl = \case
